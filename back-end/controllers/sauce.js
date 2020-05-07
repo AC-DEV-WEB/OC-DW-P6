@@ -27,6 +27,20 @@ exports.createSauce = (req, res, next) => {
 
 // modifie une sauce
 exports.modifySauce = (req, res, next) => {
+  // si l'utilisateur change l'image on efface l'ancienne
+  if (req.file) {
+    Sauce.findOne({ _id: req.params.id })
+    .then(sauce => {
+        // on récupère le nom du fichier image
+        const filename = sauce.imageUrl.split('/images/')[1];
+        // supprime l'image
+        fs.unlink(`images/${filename}`, function (error) {
+          if (error) throw error;
+        });
+    })
+    .catch(error => res.status(500).json({ error }));
+  }
+
   // on remplace l'image de la sauce
   const sauceObject = req.file ?
     {
