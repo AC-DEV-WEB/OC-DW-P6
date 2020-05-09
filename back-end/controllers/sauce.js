@@ -6,17 +6,24 @@ const fs = require('fs');
 
 // création d'une nouvelle sauce
 exports.createSauce = (req, res, next) => {
+  // on traîte les données du coprs de la requête en objet JavaScript utilisable 
   const sauceObject = JSON.parse(req.body.sauce);
   delete sauceObject._id;
+  
+  // on remplace les propriétés HTTP du coprs par une chaîne de caractères filtrée
+  const sauceSanitized = {
+    name: req.sanitize(sauceObject.name),
+    manufacturer: req.sanitize(sauceObject.manufacturer),
+    description: req.sanitize(sauceObject.description),
+    mainPepper: req.sanitize(sauceObject.mainPepper)
+  }
 
   const sauce = new Sauce({
-    ...sauceObject,
+    ...sauceSanitized,
+    userId: sauceObject.userId,
+    heat: sauceObject.heat,
     // on récupère le segment de l'URL où se trouve l'image (http/https, host, répertoire, nom du fichier)
-    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-    likes: 0,
-    dislikes: 0,
-    usersLiked: new Array(),
-    usersDisliked: new Array()
+    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
   });
 
   // on sauvegarde la sauce dans la base de données
@@ -27,31 +34,65 @@ exports.createSauce = (req, res, next) => {
 
 // modifie une sauce
 exports.modifySauce = (req, res, next) => {
-  // si l'utilisateur change l'image on efface l'ancienne
+  let sauceObject
+  let sauceSanitized
+  let sauceModifiedObject
+
+  // on contrôle s'il y a une nouvelle image
   if (req.file) {
     Sauce.findOne({ _id: req.params.id })
     .then(sauce => {
         // on récupère le nom du fichier image
         const filename = sauce.imageUrl.split('/images/')[1];
-        // supprime l'image
+        
+        // on supprime l'ancienne image
         fs.unlink(`images/${filename}`, function (error) {
           if (error) throw error;
         });
     })
     .catch(error => res.status(500).json({ error }));
-  }
 
-  // on remplace l'image de la sauce
-  const sauceObject = req.file ?
-    {
-      ...JSON.parse(req.body.sauce),
-      // on récupère le segment de l'URL où se trouve l'image (http/https, host, répertoire, nom du fichier)
+    // on récupère les informations sur l'objet qui est contenue dans cette partie de la requête
+    sauceObject = JSON.parse(req.body.sauce);
+
+    // on filtre les chaînes de caractères
+    sauceSanitized = {
+      name: req.sanitize(sauceObject.name),
+      manufacturer: req.sanitize(sauceObject.manufacturer),
+      description: req.sanitize(sauceObject.description),
+      mainPepper: req.sanitize(sauceObject.mainPepper)
+    }
+
+    // on construit l'objet qui sera mis à jour avec la nouvelle image
+    sauceModifiedObject = {
+      ...sauceSanitized,
+      heat: sauceObject.heat,
+      userId: sauceObject.userId,
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...req.body };
-    
-    Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-    .then(() => res.status(200).json({ message: 'La sauce a été modifié !' }))
-    .catch(error => res.status(400).json({ error }));
+    }
+  } else {
+    // on récupère les informations contenue dans la requête
+    sauceObject = req.body;
+
+    // on filtre les chaînes de caractères
+    sauceSanitized = {
+      name: req.sanitize(sauceObject.name),
+      manufacturer: req.sanitize(sauceObject.manufacturer),
+      description: req.sanitize(sauceObject.description),
+      mainPepper: req.sanitize(sauceObject.mainPepper)
+    }
+
+    // on construit l'objet qui sera mis à jour avec la même image
+    sauceModifiedObject = {
+      ...sauceSanitized,
+      heat: sauceObject.heat,
+      userId: sauceObject.userId
+    }
+  }
+ 
+  Sauce.updateOne({ _id: req.params.id }, { ...sauceModifiedObject, _id: req.params.id })
+  .then(() => res.status(200).json({ message: 'La sauce a été modifié !' }))
+  .catch(error => res.status(400).json({ error }));
 };
 
 // supprime une sauce

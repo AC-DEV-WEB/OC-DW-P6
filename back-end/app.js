@@ -4,6 +4,9 @@ const express = require('express');
 // package body-parser
 const bodyParser = require('body-parser');
 
+// package express-sanitizer
+const expressSanitizer = require('express-sanitizer');
+
 // package mongoose
 const mongoose = require('mongoose');
 
@@ -38,6 +41,9 @@ app.use((req, res, next) => {
 
 // middleware qui traîte les données du coprs de la requête en objet JavaScript utilisable
 app.use(bodyParser.json());
+
+// middleware qui filtre les chaînes de caractères pour empêcher l’exécution de code JavaScript (XSS)
+app.use(expressSanitizer());
 
 // middleware qui définit le chemin static du répertoire des images 
 app.use('/images', express.static(path.join(__dirname, 'images')));
