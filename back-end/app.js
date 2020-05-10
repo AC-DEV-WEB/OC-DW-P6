@@ -23,7 +23,7 @@ mongoose.set('useFindAndModify', false);
 mongoose.set('useCreateIndex', true);
 
 // connection à la base de données MongoDB
-mongoose.connect('mongodb+srv://root:jk3xvksPO4NEyJAl@openclassrooms-mcasp.mongodb.net/piquante?retryWrites=true&w=majority',
+mongoose.connect('mongodb+srv://ac-dev-web:jk3xvksPO4NEyJAl@openclassrooms-mcasp.mongodb.net/piquante?retryWrites=true&w=majority',
   { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connection to MongoDB successful!'))
   .catch(() => console.log('Connection to MongoDB failed!'));
