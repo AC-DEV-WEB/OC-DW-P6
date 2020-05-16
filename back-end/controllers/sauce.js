@@ -131,7 +131,7 @@ exports.likeOneSauce = (req, res, next) => {
   const userId = req.body.userId;
   const like = req.body.like;
 
-  // on vérifie si l'utilisateur à déjà noté la sauce
+  // on vérifie si l'utilisateur a déjà noté la sauce
   if (like === 0) {
     Sauce.findOne({ _id: req.params.id })
     .then((sauce) => {
